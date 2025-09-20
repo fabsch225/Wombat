@@ -14,11 +14,11 @@ using namespace std;
 OpeningDB opening_db;
 
 int main() {
-    opening_db.load_all();
-
     // Initialize surge
     initialise_all_databases();
     zobrist::initialise_zobrist_keys();
+
+    opening_db.load_all();
 
     Position p;
     Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
@@ -28,7 +28,7 @@ int main() {
     int depth = 4; // AI search depth
 
     while (true) {
-        cout << p << "\n";
+        //cout << p << "\n";
 
         MoveList<WHITE> list(p);
         if (list.size() == 0) {

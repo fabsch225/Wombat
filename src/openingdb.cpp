@@ -71,7 +71,7 @@ void OpeningDB::play_moves_on_position(Position &pos, const std::string &uci) {
 void OpeningDB::build_index() {
     for (auto &op : openings) {
         Position pos;
-        Position::set(op.fen, pos); // initialise board from FEN
+        Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", pos);
         std::stringstream ss(op.uci);
         std::vector<std::string> moves;
         std::string move;
