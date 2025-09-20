@@ -14,6 +14,10 @@
 
 using namespace std;
 
+using Score = int64_t;
+static constexpr Score INF = 1000000000; // large bound but << INT64_MAX
+static constexpr int MATE_SCORE = 10000000;
+
 extern OpeningDB opening_db;
 TranspositionTable TT;
 EndgameDB endgame_db;
@@ -22,7 +26,7 @@ template<Color Us>
 int quiescence(Position &p, int alpha, int beta) {
     if (p.in_check<Us>() || p.in_check<~Us>()) {
         MoveList<Us> moves(p);
-        if (moves.size() == 0) return -99999; // checkmate
+        if (moves.size() == 0) return -MATE_SCORE; // checkmate
 
         for (auto &m : moves) {
             p.play<Us>(m);
@@ -84,7 +88,7 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
     if (moves.size() == 0) {
         // checkmate or stalemate
         // if king is attacked -> checkmate
-        if (p.in_check<Us>()) return -99999 + (10 - depth);
+        if (p.in_check<Us>()) return -MATE_SCORE + (10 - depth);
         return 0; // stalemate
     }
     // move ordering: simple: captures first
@@ -120,11 +124,10 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
     return bestScore;
 }
 
-using Score = int64_t;
-static constexpr Score INF = 1000000000; // large bound but << INT64_MAX
-
 template<Color Us>
 Move find_best_move(Position &p, int maxDepth) {
+    TT.clear();
+
     // Opening book query
     std::string book_uci;
     MoveList<Us> rootMoves(p);
@@ -149,7 +152,7 @@ Move find_best_move(Position &p, int maxDepth) {
 
     // Iterative deepening loop
     for (int depth = 1; depth <= maxDepth; ++depth) {
-        Score window = 500; // aspiration window in centipawns
+        Score window = 500; // aspiration window
         Score alpha = haveScore ? prevScore - window : -INF;
         Score beta  = haveScore ? prevScore + window :  INF;
 

@@ -220,7 +220,7 @@ int evaluate(Position &p) {
     if (Us == WHITE) score += pins_b - pins_w;
     else score += pins_w - pins_b;
 
-    // Pseudo-legal mobility using attack bitboards (fast, no legality)
+    // Pseudo-legal mobility using attack bitboards
     auto mobility_for = [&](Color c) {
         const Bitboard own = (c == WHITE ? w_all : b_all);
         const Bitboard opp = (c == WHITE ? b_all : w_all);
@@ -263,8 +263,8 @@ int evaluate(Position &p) {
         // Optionally include small pawn attack mobility (very light)
         Bitboard pawns = p.bitboard_of(c, PAWN);
         Bitboard pawn_att = (c == WHITE ? pawn_attacks<WHITE>(pawns) : pawn_attacks<BLACK>(pawns)) & ~own;
-        m += count_bits(pawn_att) * 1;
-        // King mobility usually brings king-safety complications; keep it out or very light.
+        m += count_bits(pawn_att) * 0.5;
+
         // Bitboard k = p.bitboard_of(c, KING);
         // if (k) m += count_bits(attacks<KING>(bsf(k), all) & ~own) * 1;
 
@@ -381,7 +381,6 @@ int evaluate(Position &p) {
     int danger_w = 0.05 * king_threat_for(WHITE);
     int danger_b = 0.05 * king_threat_for(BLACK);
 
-    // Combine: higher danger to a side reduces that side's score (same pattern as pins)
     if (Us == WHITE) score += danger_b - danger_w;
     else score += danger_w - danger_b;
 
