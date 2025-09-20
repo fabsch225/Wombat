@@ -1,3 +1,6 @@
 [submodule "data/chess-openings"]
 	path = data/chess-openings
 	url = https://github.com/lichess-org/chess-openings.git
+[submodule "lib/Fathom"]
+	path = lib/Fathom
+	url = https://github.com/jdart1/Fathom.git
