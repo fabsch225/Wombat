@@ -2,7 +2,7 @@
 // Created by fabian on 9/19/25.
 //
 
-#include "openingdb.h"
+#include "OpeningDB.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

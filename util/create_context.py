@@ -1,7 +1,7 @@
 import os
 import re
 
-HEADER_DIR = "../src"
+HEADER_DIR = "../"
 OUTPUT_FILE = "combined_headers.txt"
 
 # Regex to match struct/union/typedef declarations

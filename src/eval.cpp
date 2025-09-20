@@ -29,9 +29,9 @@ static const int pawn_table[64] = {
    50, 50, 50, 50, 50, 50, 50, 50,
    10, 10, 20, 30, 30, 20, 10, 10,
     5,  5, 10, 25, 25, 10,  5,  5,
-    0,  0,  0, 20, 20,  0,  0,  0,
-    5, -5,-10,  0,  0,-10, -5,  5,
-    5, 10, 10,-20,-20, 10, 10,  5,
+    0,  5,  5, 20, 20,  5,  5,  5,
+    5,  5,-10,  0,  0,-10,  5,  5,
+    5,  5, 10,-20,-20, 10,  5,  5,
     0,  0,  0,  0,  0,  0,  0,  0
 };
 
@@ -47,38 +47,72 @@ static const int knight_table[64] = {
 };
 
 static const int bishop_table[64] = {
-    -20,-10,-10,-10,-10,-10,-10,-20,
-    -10,  5,  0,  0,  0,  0,  5,-10,
-    -10, 10, 10, 10, 10, 10, 10,-10,
-    -10,  0, 10, 10, 10, 10,  0,-10,
-    -10,  5,  5, 10, 10,  5,  5,-10,
-    -10,  0,  5, 10, 10,  5,  0,-10,
-    -10,  0,  0,  0,  0,  0,  0,-10,
-    -20,-10,-10,-10,-10,-10,-10,-20
+    -20,  0,  0,  0,  0,  0,  0,-20,
+      0, 10,  0,  5,  5,  0, 10,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0, 10,  0,  5,  5,  0,  10, 0,
+    -20,  0,  0,  0,  0,  0,  0,-20
+};
+
+static const int rook_table[64] = {
+      5,  5,  5,  5,  5,  5,  5,  5,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,
+      5,  5,  5,  5,  5,  5,  5,  5,
+};
+
+static const int queen_table[64] = {
+    0,  5,  5,  0,  0,  5,  5,  0,
+    5,  5,  5,  0,  0,  5,  5,  5,
+    5,  5,  5,  0,  0,  5,  5,  5,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    5,  5,  5,  0,  0,  5,  5,  5,
+    5,  5,  5,  0,  0,  5,  5,  5,
+    0,  5,  5,  0,  0,  5,  5,  0,
+};
+
+static const int king_table[64] = {
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,
+    5, 40, 40,  0,  0,  5, 80,  5,
 };
 
 template<Color Us>
-int evaluate(const Position &p) {
+int evaluate(Position &p) {
     int score = 0;
 
     // Track pawns by file for connected pawn detection
     std::array<std::vector<int>, 8> pawn_files_white;
     std::array<std::vector<int>, 8> pawn_files_black;
-
     for (int sq = 0; sq < 64; ++sq) {
         auto pc = p.at(Square(sq));
         if (pc == NO_PIECE) continue;
-
         int v = piece_value(pc);
         int piece_score = v;
 
-        int idx = (color_of(pc) == WHITE ? sq : (63 - sq));
+        int idx = (color_of(pc) == BLACK ? sq : (63 - sq));
 
         // Add piece-square table bonuses
         switch (type_of(pc)) {
-            case PAWN:   piece_score += 0.05 * pawn_table[idx];   break;
-            case KNIGHT: piece_score += 0.05 * knight_table[idx]; break;
-            case BISHOP: piece_score += 0.05 * bishop_table[idx]; break;
+            case PAWN:   piece_score += 0.2 * pawn_table[idx];   break;
+            case KNIGHT: piece_score += 0.2 * knight_table[idx]; break;
+            case BISHOP: piece_score += 0.2 * bishop_table[idx]; break;
+            case ROOK:   piece_score += 0.2 * rook_table[idx];   break;
+            case QUEEN:  piece_score += 0.2 * queen_table[idx];  break;
+            case KING:   piece_score += 0.4 * king_table[idx];   break;
             default: break;
         }
 
@@ -88,6 +122,29 @@ int evaluate(const Position &p) {
             int rank = sq / 8;
             if (color_of(pc) == WHITE) pawn_files_white[file].push_back(rank);
             else pawn_files_black[file].push_back(rank);
+        }
+
+        bool defended = false;
+        Bitboard defenders;
+        if (color_of(pc) == WHITE)
+            defenders = p.attackers_from<WHITE>(Square(sq), p.all_pieces<WHITE>() | p.all_pieces<BLACK>());
+        else
+            defenders = p.attackers_from<BLACK>(Square(sq), p.all_pieces<WHITE>() | p.all_pieces<BLACK>());
+        // Remove self from defenders
+        defenders &= ~(Bitboard(1ULL) << sq);
+        if (defenders) defended = true;
+
+        if (defended) {
+            int defend_bonus = 0;
+            switch (type_of(pc)) {
+                case ROOK: defend_bonus = 20; break;
+                case QUEEN: defend_bonus = 10; break;
+                case BISHOP: defend_bonus = 8; break;
+                case KNIGHT: defend_bonus = 8; break;
+                case PAWN: defend_bonus = 5; break;
+                default: break;
+            }
+            piece_score += 0.2 * defend_bonus;
         }
 
         if (color_of(pc) == Us) score += piece_score;
@@ -121,13 +178,106 @@ int evaluate(const Position &p) {
         return bonus;
     };
 
-    int conn_white = 0.05 * connected_pawns(pawn_files_white, WHITE);
-    int conn_black = 0.05 * connected_pawns(pawn_files_black, BLACK);
+    int conn_white = 0.1 * connected_pawns(pawn_files_white, WHITE);
+    int conn_black = 0.1 * connected_pawns(pawn_files_black, BLACK);
 
     if (Us == WHITE) score += conn_white - conn_black;
     else score += conn_black - conn_white;
 
+    auto count_bits = [&](Bitboard b) {
+        int c = 0;
+        while (b) { pop_lsb(&b); ++c; }
+        return c;
+    };
+
+    const Bitboard all = p.all_pieces<WHITE>() | p.all_pieces<BLACK>();
+    const Bitboard w_all = p.all_pieces<WHITE>();
+    const Bitboard b_all = p.all_pieces<BLACK>();
+
+    const Square wksq = bsf(p.bitboard_of(WHITE, KING));
+    const Square bksq = bsf(p.bitboard_of(BLACK, KING));
+
+    // Pins: pieces pinned to their own kings
+    Bitboard pinned_white = p.get_pinned<WHITE>(wksq, w_all, all);
+    Bitboard pinned_black = p.get_pinned<BLACK>(bksq, b_all, all);
+
+    auto pin_score_for = [&](Color c, Bitboard pinned_bb) {
+        int s = 0;
+        // Heavier penalty/bonus for minors, then rooks, then pawns, queens lowest
+        if (pinned_bb) {
+            s += 20 * count_bits(pinned_bb & p.bitboard_of(c, KNIGHT));
+            s += 20 * count_bits(pinned_bb & p.bitboard_of(c, BISHOP));
+            s += 15 * count_bits(pinned_bb & p.bitboard_of(c, ROOK));
+            s += 10 * count_bits(pinned_bb & p.bitboard_of(c, PAWN));
+            s += 8  * count_bits(pinned_bb & p.bitboard_of(c, QUEEN));
+        }
+        return s;
+    };
+
+    int pins_w = int(0.5 * pin_score_for(WHITE, pinned_white));
+    int pins_b = int(0.5 * pin_score_for(BLACK, pinned_black));
+
+    if (Us == WHITE) score += pins_b - pins_w;
+    else score += pins_w - pins_b;
+
+    // Pseudo-legal mobility using attack bitboards (fast, no legality)
+    auto mobility_for = [&](Color c) {
+        const Bitboard own = (c == WHITE ? w_all : b_all);
+        const Bitboard opp = (c == WHITE ? b_all : w_all);
+        int m = 0;
+
+        Bitboard b;
+
+        // Knights
+        b = p.bitboard_of(c, KNIGHT);
+        while (b) {
+            Square s = pop_lsb(&b);
+            Bitboard t = attacks<KNIGHT>(s, all) & ~own;
+            m += count_bits(t) * 4;
+        }
+
+        // Bishops
+        b = p.bitboard_of(c, BISHOP);
+        while (b) {
+            Square s = pop_lsb(&b);
+            Bitboard t = attacks<BISHOP>(s, all) & ~own;
+            m += count_bits(t) * 4;
+        }
+
+        // Rooks
+        b = p.bitboard_of(c, ROOK);
+        while (b) {
+            Square s = pop_lsb(&b);
+            Bitboard t = attacks<ROOK>(s, all) & ~own;
+            m += count_bits(t) * 2;
+        }
+
+        // Queens (rook + bishop attacks)
+        b = p.bitboard_of(c, QUEEN);
+        while (b) {
+            Square s = pop_lsb(&b);
+            Bitboard t = (attacks<BISHOP>(s, all) | attacks<ROOK>(s, all)) & ~own;
+            m += count_bits(t) * 1;
+        }
+
+        // Optionally include small pawn attack mobility (very light)
+        Bitboard pawns = p.bitboard_of(c, PAWN);
+        Bitboard pawn_att = (c == WHITE ? pawn_attacks<WHITE>(pawns) : pawn_attacks<BLACK>(pawns)) & ~own;
+        m += count_bits(pawn_att) * 1;
+        // King mobility usually brings king-safety complications; keep it out or very light.
+        // Bitboard k = p.bitboard_of(c, KING);
+        // if (k) m += count_bits(attacks<KING>(bsf(k), all) & ~own) * 1;
+
+        return m;
+    };
+
+    int mob_w = int(0.1 * mobility_for(WHITE));
+    int mob_b = int(0.1 * mobility_for(BLACK));
+
+    if (Us == WHITE) score += mob_w - mob_b;
+    else score += mob_b - mob_w;
+
     return score;
 }
-template int evaluate<WHITE>(const Position &p);
-template int evaluate<BLACK>(const Position &p);
+template int evaluate<WHITE>(Position &p);
+template int evaluate<BLACK>(Position &p);

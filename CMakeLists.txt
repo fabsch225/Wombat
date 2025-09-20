@@ -8,8 +8,13 @@ add_executable(Chess main.cpp
         src/search.h
         src/eval.cpp
         src/eval.h
-        src/openingdb.cpp
-        src/openingdb.h
+
+        src/OpeningDB.cpp
+        src/OpeningDB.h
+        src/TranspositionTable.cpp
+        src/TranspositionTable.h
+        src/EndgameDB.cpp
+        src/EndgameDB.h
 
         lib/surge/src/position.cpp
         lib/surge/src/position.h
@@ -18,3 +23,22 @@ add_executable(Chess main.cpp
         lib/surge/src/types.cpp
         lib/surge/src/types.h
 )
+
+add_library(fathom SHARED
+        lib/Fathom/src/tbprobe.c
+)
+
+# Fathom uses C99 and needs PIC for a shared lib
+set_target_properties(fathom PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+        POSITION_INDEPENDENT_CODE ON
+)
+
+target_include_directories(fathom PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/Fathom/src
+)
+
+target_compile_options(fathom PRIVATE -std=gnu99 -O2 -Wall -Wshadow)
+
+target_link_libraries(Chess PRIVATE fathom)

@@ -13,6 +13,6 @@
 int piece_value(int piece);
 
 template<Color Us>
-int evaluate(const Position &p);
+int evaluate(Position &p);
 
 #endif //CHESS_EVAL_H
