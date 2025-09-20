@@ -22,7 +22,7 @@ public:
         std::string name;
         std::string pgn;
         std::string uci;
-        std::string fen; // original FEN for reference
+        std::string fen;
     };
 
     OpeningDB();

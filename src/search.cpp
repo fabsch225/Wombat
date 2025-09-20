@@ -16,7 +16,7 @@ extern OpeningDB opening_db;
 
 template<Color Us>
 int quiescence(Position &p, int alpha, int beta) {
-    int stand = evaluate(p);
+    int stand = evaluate<Us>(p);
     if (stand >= beta) return beta;
     if (alpha < stand) alpha = stand;
     MoveList<Us> moves(p);
@@ -39,7 +39,7 @@ int quiescence(Position &p, int alpha, int beta) {
     for (auto &m: caps) {
         Position copy = p;
         copy.play<Us>(m);
-        int score = -quiescence<Us>(copy, -beta, -alpha);
+        int score = -quiescence<~Us>(copy, -beta, -alpha);
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -67,7 +67,7 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
     for (auto &m: moves) {
         Position copy = p;
         copy.play<Us>(m);
-        int score = -alphabeta<Us>(copy, depth - 1, -beta, -alpha);
+        int score = -alphabeta<~Us>(copy, depth - 1, -beta, -alpha);
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -92,7 +92,7 @@ Move find_best_move(Position &p, int depth) {
     for (auto &m: moves) {
         Position copy = p;
         copy.play<Us>(m);
-        int score = -alphabeta<Us>(copy, depth - 1, -1000000, 1000000);
+        int score = -alphabeta<~Us>(copy, depth - 1, -1000000, 1000000);
         if (score > bestScore) {
             bestScore = score;
             best = m;

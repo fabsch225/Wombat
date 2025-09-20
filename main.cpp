@@ -21,7 +21,7 @@ int main() {
     zobrist::initialise_zobrist_keys();
 
     Position p;
-    Position::set("r1b1kbnr/2p1pppp/8/2p5/4PB2/p1N2N2/PPP2PPP/R2R2K1 w - - 0 12", p);
+    Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
 
     cout << "Starting FEN: " << p.fen() << "\n";
 

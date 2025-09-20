@@ -22,15 +22,18 @@ int piece_value(int p) {
     }
 }
 
+template<Color Us>
 int evaluate(const Position &p) {
     int score = 0;
     for (int sq = 0; sq < 64; ++sq) {
         auto pc = p.at(Square(sq));
         if (pc == NO_PIECE) continue;
         int v = piece_value(pc);
-        if (color_of(pc) == WHITE) score += v;
+        if (color_of(pc) == Us) score += v;
         else score -= v;
     }
-    // small piece-square/king safety can be added but keep basic
-    return (p.turn() == WHITE ? score : -score); // perspective: positive means side to move advantage
+    return score;
 }
+
+template int evaluate<WHITE>(const Position &p);
+template int evaluate<BLACK>(const Position &p);

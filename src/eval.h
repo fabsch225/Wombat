@@ -11,6 +11,8 @@
 #include "../lib/surge/src/types.h"
 
 int piece_value(int piece);
+
+template<Color Us>
 int evaluate(const Position &p);
 
 #endif //CHESS_EVAL_H

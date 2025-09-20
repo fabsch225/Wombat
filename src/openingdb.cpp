@@ -52,11 +52,7 @@ void OpeningDB::load_csv(const std::string &filename) {
 }
 
 void OpeningDB::load_all() {
-    load_csv("a.csv");
-    load_csv("b.csv");
-    load_csv("c.csv");
-    load_csv("d.csv");
-    load_csv("e.csv");
+    load_csv("/home/fabian/misc/Chess/data/openings.txt");
     build_index();
 }
 
