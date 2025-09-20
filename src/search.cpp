@@ -20,14 +20,14 @@ EndgameDB endgame_db;
 
 template<Color Us>
 int quiescence(Position &p, int alpha, int beta) {
-    if (p.in_check<Us>()) {
+    if (p.in_check<Us>() || p.in_check<~Us>()) {
         MoveList<Us> moves(p);
         if (moves.size() == 0) return -99999; // checkmate
 
         for (auto &m : moves) {
-            Position copy = p;
-            copy.play<Us>(m);
-            int score = -quiescence<~Us>(copy, -beta, -alpha);
+            p.play<Us>(m);
+            int score = -quiescence<~Us>(p, -beta, -alpha);
+            p.undo<Us>(m);
             if (score >= beta) return beta;
             if (score > alpha) alpha = score;
         }
@@ -48,16 +48,16 @@ int quiescence(Position &p, int alpha, int beta) {
         if (m.is_capture() || isPromotion) essential_moves.push_back(m);
     }
 
-    // sort captures by simple MVV-LVA heuristic (here by captured piece value)
+    // sort
     sort(essential_moves.begin(), essential_moves.end(), [&](const Move &a, const Move &b) {
         int va = a.is_capture() ? piece_value(p.at(a.to())) : 0;
         int vb = b.is_capture() ? piece_value(p.at(b.to())) : 0;
         return va > vb;
     });
     for (auto &m: essential_moves) {
-        Position copy = p;
-        copy.play<Us>(m);
-        int score = -quiescence<~Us>(copy, -beta, -alpha);
+        p.play<Us>(m);
+        int score = -quiescence<~Us>(p, -beta, -alpha);
+        p.undo<Us>(m);
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -67,7 +67,6 @@ int quiescence(Position &p, int alpha, int beta) {
 // Alpha-beta search
 template<Color Us>
 int alphabeta(Position &p, int depth, int alpha, int beta) {
-
     // TT Lookup
     uint64_t key = p.get_hash();
     TTEntry* entry = TT.probe(key);
@@ -97,11 +96,12 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
     });
     int bestScore = -1000000;
     Move bestMove;
+    int origAlpha = alpha;
 
-    for (auto &m : moves) {
-        Position copy = p;
-        copy.play<Us>(m);
-        int score = -alphabeta<~Us>(copy, depth - 1, -beta, -alpha);
+    for (auto &m : moveVec) {
+        p.play<Us>(m);
+        int score = -alphabeta<~Us>(p, depth - 1, -beta, -alpha);
+        p.undo<Us>(m);
         if (score > bestScore) {
             bestScore = score;
             bestMove = m;
@@ -109,10 +109,11 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
         if (bestScore > alpha) alpha = bestScore;
         if (alpha >= beta) break;
     }
+
     NodeType type;
-    if (bestScore <= alpha) type = NodeType::UPPER;       // fail-low
-    else if (bestScore >= beta) type = NodeType::LOWER;   // fail-high
-    else type = NodeType::EXACT;                          // exact score
+    if (bestScore <= origAlpha) type = NodeType::UPPER;       // fail-low
+    else if (bestScore >= beta) type = NodeType::LOWER;       // fail-high
+    else type = NodeType::EXACT;                             // exact score
 
     TT.store(key, depth, bestScore, type, bestMove);
 
@@ -148,7 +149,7 @@ Move find_best_move(Position &p, int maxDepth) {
 
     // Iterative deepening loop
     for (int depth = 1; depth <= maxDepth; ++depth) {
-        Score window = 50; // aspiration window in centipawns
+        Score window = 500; // aspiration window in centipawns
         Score alpha = haveScore ? prevScore - window : -INF;
         Score beta  = haveScore ? prevScore + window :  INF;
 
@@ -171,11 +172,9 @@ Move find_best_move(Position &p, int maxDepth) {
 
             // Root search loop
             for (auto &m : moveVec) {
-                Position copy = p;
-                copy.play<Us>(m);
-
-                Score score = -alphabeta<~Us>(copy, depth - 1, -beta, -alpha);
-
+                p.play<Us>(m);
+                Score score = -alphabeta<~Us>(p, depth - 1, -beta, -alpha);
+                p.undo<Us>(m);
                 if (score > currentBestScore) {
                     currentBestScore = score;
                     currentBestMove = m;
@@ -194,7 +193,10 @@ Move find_best_move(Position &p, int maxDepth) {
                     alpha = prevScore - window;
                     beta  = prevScore + window;
                 }
-                continue; // retry
+                // reset scores before retry
+                currentBestScore = -INF;
+                currentBestMove = Move();
+                continue;
             } else if (currentBestScore >= high) {
                 // fail high → widen up
                 if (window >= INF / 2) {
@@ -204,13 +206,16 @@ Move find_best_move(Position &p, int maxDepth) {
                     alpha = prevScore - window;
                     beta  = prevScore + window;
                 }
-                continue; // retry
+                // reset scores before retry
+                currentBestScore = -INF;
+                currentBestMove = Move();
+                continue;
             } else {
                 // success
                 prevScore = currentBestScore;
                 bestMove = currentBestMove;
                 haveScore = true;
-                break; // done with this depth
+                break;
             }
         }
     }

@@ -28,11 +28,11 @@ int main() {
     opening_db.load_all();
 
     Position p;
-    //Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
-    Position::set("1rk5/8/8/8/8/8/2K5/8 b - - 0 1", p);
+    Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
+    //Position::set("1rk5/8/8/8/8/8/2K5/8 b - - 0 1", p);
     cout << "Starting FEN: " << p.fen() << "\n";
 
-    int depth = 4; // AI search depth
+    int depth = 5; // AI search depth
 
     while (true) {
         cout << p << "\n";
@@ -70,6 +70,12 @@ int main() {
                 }
             }
         } else {
+            MoveList<BLACK> ai_list(p);
+            if (ai_list.size() == 0) {
+                cout << "Game over!\n";
+                break;
+            }
+
             // AI move
             cout << "AI thinking...\n";
             Move best = find_best_move<BLACK>(p, depth);
