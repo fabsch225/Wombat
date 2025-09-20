@@ -4,3 +4,6 @@
 [submodule "lib/Fathom"]
 	path = lib/Fathom
 	url = https://github.com/jdart1/Fathom.git
+[submodule "lib/surge"]
+	path = lib/surge
+	url = https://github.com/fabsch225/surge.git
