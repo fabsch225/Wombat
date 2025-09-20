@@ -3,27 +3,43 @@
 //
 
 #include "search.h"
+#include <algorithm>
+#include <vector>
+#include <random>
+#include <ranges>
 
-// Quiescence: capture-only
-int quiescence(Board &bd, int alpha, int beta) {
-    int stand = evaluate(bd);
+#include "openingdb.h"
+
+using namespace std;
+
+extern OpeningDB opening_db;
+
+template<Color Us>
+int quiescence(Position &p, int alpha, int beta) {
+    int stand = evaluate(p);
     if (stand >= beta) return beta;
     if (alpha < stand) alpha = stand;
-    auto moves = legal_moves(bd);
+    MoveList<Us> moves(p);
     // only consider captures and promotions
     vector<Move> caps;
-    for (auto &m: moves) if (m.capture || m.promo) caps.push_back(m);
+
+    for (auto &m: moves) {
+        MoveFlags f = m.flags();
+        bool isPromotion = (f >= MoveFlags::PR_KNIGHT && f <= MoveFlags::PR_QUEEN) ||
+                           (f >= MoveFlags::PC_KNIGHT && f <= MoveFlags::PC_QUEEN);
+        if (m.is_capture() || isPromotion) caps.push_back(m);
+    }
+
     // sort captures by simple MVV-LVA heuristic (here by captured piece value)
     sort(caps.begin(), caps.end(), [&](const Move &a, const Move &b) {
-        int va = a.capture ? piece_value(bd.sq_piece[a.to]) : 0;
-        int vb = b.capture ? piece_value(bd.sq_piece[b.to]) : 0;
+        int va = a.is_capture() ? piece_value(p.at(a.to())) : 0;
+        int vb = b.is_capture() ? piece_value(p.at(b.to())) : 0;
         return va > vb;
     });
     for (auto &m: caps) {
-        Board copy = bd;
-        Undo u;
-        make_move(copy, m, u);
-        int score = -quiescence(copy, -beta, -alpha);
+        Position copy = p;
+        copy.play<Us>(m);
+        int score = -quiescence<Us>(copy, -beta, -alpha);
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -31,57 +47,52 @@ int quiescence(Board &bd, int alpha, int beta) {
 }
 
 // Alpha-beta search
-int alphabeta(Board &bd, int depth, int alpha, int beta) {
-    if (depth == 0) return quiescence(bd, alpha, beta);
-    auto moves = legal_moves(bd);
-    if (moves.empty()) {
+template<Color Us>
+int alphabeta(Position &p, int depth, int alpha, int beta) {
+    if (depth == 0) return quiescence<Us>(p, alpha, beta);
+    MoveList<Us> moves(p);
+    if (moves.size() == 0) {
         // checkmate or stalemate
         // if king is attacked -> checkmate
-        // find king
-        Color us = bd.side_to_move;
-        int ksq = -1;
-        u64 kings = bd.by_color[us] & (us == WHITE ? bd.pieces[WK] : bd.pieces[BK]);
-        if (kings) ksq = lsb_index(kings);
-        if (ksq != -1 && is_square_attacked(bd, ksq, (us == WHITE ? BLACK : WHITE))) return -99999 + (10 - depth);
-        else return 0; // stalemate
+        if (p.in_check<Us>()) return -99999 + (10 - depth);
+        return 0; // stalemate
     }
     // move ordering: simple: captures first
-    sort(moves.begin(), moves.end(), [&](const Move &a, const Move &b) {
-        int va = a.capture ? piece_value(bd.sq_piece[a.to]) : 0;
-        int vb = b.capture ? piece_value(bd.sq_piece[b.to]) : 0;
+    vector<Move> moveVec(moves.begin(), moves.end());
+    sort(moveVec.begin(), moveVec.end(), [&](const Move &a, const Move &b) {
+        int va = a.is_capture() ? piece_value(p.at(a.to())) : 0;
+        int vb = b.is_capture() ? piece_value(p.at(b.to())) : 0;
         return va > vb;
     });
     for (auto &m: moves) {
-        Board copy = bd;
-        Undo u;
-        make_move(copy, m, u);
-        int score = -alphabeta(copy, depth - 1, -beta, -alpha);
+        Position copy = p;
+        copy.play<Us>(m);
+        int score = -alphabeta<Us>(copy, depth - 1, -beta, -alpha);
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
     return alpha;
 }
 
-Move find_best_move(Board &bd, int depth) {
+template<Color Us>
+Move find_best_move(Position &p, int depth) {
     // --- Opening book query ---
     std::string book_uci;
-    if (depth >= 3 && opening_db.get_random_move(bd, book_uci)) {
-        auto moves = legal_moves(bd);
+    MoveList<Us> moves(p);
+    if (depth >= 3 && opening_db.get_random_move(p, book_uci)) {
         Move book_move;
-        if (parse_move(book_uci, moves, book_move)) {
+        if (parse_move(p, book_uci, book_move)) {
             return book_move;
         }
     }
 
     // --- Normal search if no book move found ---
-    auto moves = legal_moves(bd);
     Move best;
     int bestScore = -1000000;
     for (auto &m: moves) {
-        Board copy = bd;
-        Undo u;
-        make_move(copy, m, u);
-        int score = -alphabeta(copy, depth - 1, -1000000, 1000000);
+        Position copy = p;
+        copy.play<Us>(m);
+        int score = -alphabeta<Us>(copy, depth - 1, -1000000, 1000000);
         if (score > bestScore) {
             bestScore = score;
             best = m;
@@ -89,3 +100,10 @@ Move find_best_move(Board &bd, int depth) {
     }
     return best;
 }
+
+template int quiescence<WHITE>(Position&, int, int);
+template int quiescence<BLACK>(Position&, int, int);
+template int alphabeta<WHITE>(Position&, int, int, int);
+template int alphabeta<BLACK>(Position&, int, int, int);
+template Move find_best_move<WHITE>(Position&, int);
+template Move find_best_move<BLACK>(Position&, int);

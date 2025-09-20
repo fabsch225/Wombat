@@ -5,19 +5,16 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Chess main.cpp
         src/search.cpp
-        src/eval.cpp
-        src/movegen.cpp
-        src/move.cpp
-        src/ui.cpp
-        src/transposition.cpp
-        src/board.h
-        src/constants.h
-        src/eval.h
-        src/move.h
-        src/movegen.h
         src/search.h
-        src/transposition.h
-        src/ui.h
+        src/eval.cpp
+        src/eval.h
         src/openingdb.cpp
         src/openingdb.h
+
+        lib/surge/src/position.cpp
+        lib/surge/src/position.h
+        lib/surge/src/tables.cpp
+        lib/surge/src/tables.h
+        lib/surge/src/types.cpp
+        lib/surge/src/types.h
 )

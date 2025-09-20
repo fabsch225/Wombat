@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "constants.h"
-#include "board.h"
+#include "../lib/surge/src/position.h"
+#include "../lib/surge/src/types.h"
 
 int piece_value(int piece);
-int evaluate(const Board &bd);
+int evaluate(const Position &p);
 
 #endif //CHESS_EVAL_H

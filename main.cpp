@@ -1,60 +1,42 @@
-// cpp_chess_engine.cpp
-// Baseline C++ chess engine with magic bitboards, full rule support
-// - En-passant (and en-passant x-ray checks)
-// - Promotions
-// - Castling (both sides)
-// - Legal move generation via make/move & attack tests
-// - Magic bitboard sliding attacks (rook & bishop) with precomputed magics
-// - Alpha-Beta with quiescence search
-// - Basic evaluation (material + simple piece-square tables)
-//
-// Compile: g++ -O3 -std=c++17 cpp_chess_engine.cpp -o engine
-// Run: ./engine
-// The program runs a simple search from the starting position and prints the best move found
-
 #include <bits/stdc++.h>
 #include <iostream>
 #include <iomanip>
 #include <string>
 
-#include "src/movegen.h"
-#include "src/board.h"
-#include "src/move.h"
+#include "lib/surge/src/position.h"
+
 #include "src/eval.h"
 #include "src/openingdb.h"
 #include "src/search.h"
-#include "src/ui.h"
 
 using namespace std;
-
-// board square indices 0..63
 
 OpeningDB opening_db;
 
 int main() {
     opening_db.load_all();
 
-    init_kminor();
-    init_magic_tables();
+    // Initialize surge
+    initialise_all_databases();
+    zobrist::initialise_zobrist_keys();
 
-    Board bd;
-    bd.init_from_fen("r1b1kbnr/2p1pppp/8/2p5/4PB2/p1N2N2/PPP2PPP/R2R2K1 w - - 0 12");
+    Position p;
+    Position::set("r1b1kbnr/2p1pppp/8/2p5/4PB2/p1N2N2/PPP2PPP/R2R2K1 w - - 0 12", p);
 
-    cout << "Starting FEN: " << bd.to_fen() << "\n";
+    cout << "Starting FEN: " << p.fen() << "\n";
 
     int depth = 4; // AI search depth
 
     while (true) {
-        print_board(bd);
+        cout << p << "\n";
 
-        // Check game over (simplified)
-        vector<Move> moves = legal_moves(bd);
-        if (moves.empty()) {
+        MoveList<WHITE> list(p);
+        if (list.size() == 0) {
             cout << "Game over!\n";
             break;
         }
 
-        if (bd.side_to_move == WHITE) {
+        if (p.turn() == WHITE) {
             // Human move
             Move user_move;
             string input;
@@ -63,14 +45,19 @@ int main() {
             while (!valid) {
                 cout << "Enter your move (e.g., e2e4): ";
                 cin >> input;
-
-                for (const auto &m: moves) {
-                    cout << move_to_str(m) << " ";
+                user_move = Move(input);
+                for (const auto &m: list) {
+                    cout << m << " ";
+                    if (m.to() == user_move.to() && m.from() == user_move.from()) {
+                        user_move = m;
+                        valid = true;
+                        break;
+                    }
                 }
 
-                if (parse_move(input, moves, user_move) && is_legal_move(bd, user_move)) {
-                    apply_move(bd, user_move);
-                    valid = true;
+                cout << "Your move is" << user_move << "\n";
+                if (valid) {
+                    p.play<WHITE>(user_move);
                 } else {
                     cout << "Invalid move, try again.\n";
                 }
@@ -78,12 +65,12 @@ int main() {
         } else {
             // AI move
             cout << "AI thinking...\n";
-            Move best = find_best_move(bd, depth);
-            cout << "AI plays: " << move_to_str(best) << "\n";
-            apply_move(bd, best);
+            Move best = find_best_move<BLACK>(p, depth);
+            cout << "AI plays: " << best << "\n";
+            p.play<BLACK>(best);
         }
     }
 
-    cout << "Final FEN: " << bd.to_fen() << "\n";
+    cout << "Final FEN: " << p.fen() << "\n";
     return 0;
 }

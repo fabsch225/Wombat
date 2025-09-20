@@ -7,16 +7,16 @@
 
 #pragma once
 
-#include "board.h"
-#include "move.h"
 #include "eval.h"
-#include "movegen.h"
-#include "openingdb.h"
+#include "../lib/surge/src/position.h"
 
-extern OpeningDB opening_db;
+template<Color Us>
+int quiescence(Position &p, int alpha, int beta);
 
-int quiescence(Board &bd, int alpha, int beta);
-int alphabeta(Board &bd, int depth, int alpha, int beta);
-Move find_best_move(Board &bd, int depth);
+template<Color Us>
+int alphabeta(Position &p, int depth, int alpha, int beta);
+
+template<Color Us>
+Move find_best_move(Position &p, int depth);
 
 #endif //CHESS_SEARCH_H
