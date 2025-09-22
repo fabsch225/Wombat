@@ -42,3 +42,13 @@ target_include_directories(fathom PUBLIC
 target_compile_options(fathom PRIVATE -std=gnu99 -O2 -Wall -Wshadow)
 
 target_link_libraries(Chess PRIVATE fathom)
+add_executable(Openings
+        util/create_openings.cpp
+
+        lib/surge/src/position.cpp
+        lib/surge/src/position.h
+        lib/surge/src/tables.cpp
+        lib/surge/src/tables.h
+        lib/surge/src/types.cpp
+        lib/surge/src/types.h
+)

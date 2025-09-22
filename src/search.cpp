@@ -83,6 +83,11 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
         if (alpha >= beta) return entry->score;
     }
 
+    int wdl;
+    if (depth > 1 && endgame_db.probe_wdl(p, wdl)) {
+        
+    }
+
     if (depth == 0) return quiescence<Us>(p, alpha, beta);
     MoveList<Us> moves(p);
     if (moves.size() == 0) {
@@ -129,12 +134,14 @@ Move find_best_move(Position &p, int maxDepth) {
     TT.clear();
 
     // Opening book query
-    std::string book_uci;
+    Move book_move;
     MoveList<Us> rootMoves(p);
-    if (maxDepth >= 3 && opening_db.get_random_move(p, book_uci)) {
-        Move book_move;
-        if (parse_move(p, book_uci, book_move)) {
-            return book_move;
+    if (maxDepth >= 3 && opening_db.probe(p, book_move)) {
+        for (auto &m : rootMoves) {
+            if (m.to() == book_move.to() && m.from() == book_move.from()) {
+                cout << "Opening Book move found: " << book_move << "\n";
+                return m;
+            }
         }
     }
 

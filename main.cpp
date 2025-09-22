@@ -25,10 +25,10 @@ int main() {
     initialise_all_databases();
     zobrist::initialise_zobrist_keys();
 
-    opening_db.load_all();
+    opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
 
     Position p;
-    Position::set("8/p6p/8/5b1k/3b3p/4q2P/8/7K w -  -", p);
+    Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
     //Position::set("1rk5/8/8/8/8/8/2K5/8 b - - 0 1", p);
     cout << "Starting FEN: " << p.fen() << "\n";
 

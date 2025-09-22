@@ -17,6 +17,7 @@ public:
     void load(const std::string& path);
     bool probe_next_move(const Position &p, Move &move, int &dtz);
     bool probe_dtz(const Position& pos, int& result);
+    bool probe_wdl(const Position& pos, int& result);
     bool available() const { return initialized; }
 
 private:

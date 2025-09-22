@@ -202,7 +202,6 @@ void convertPosition(const Position& P, tb_pos& out) {
 }
 
 bool EndgameDB::probe_next_move(const Position &p, Move &move_out, int &dtz_out) {
-    auto fen = p.fen().c_str();
     tb_pos pos;
     convertPosition(p, pos);
 
@@ -237,6 +236,10 @@ bool EndgameDB::probe_next_move(const Position &p, Move &move_out, int &dtz_out)
     move_out = Move(Square(from), Square(to));
 
     return true;
+}
+
+bool EndgameDB::probe_wdl(const Position &pos, int &result) {
+
 }
 
 
