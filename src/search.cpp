@@ -4,12 +4,14 @@
 
 #include "search.h"
 #include <algorithm>
+#include <future>
 #include <vector>
 #include <random>
 #include <ranges>
 
 #include "EndgameDB.h"
 #include "OpeningDB.h"
+#include "SearchThreadpool.h"
 #include "TranspositionTable.h"
 
 using namespace std;
@@ -68,9 +70,12 @@ int quiescence(Position &p, int alpha, int beta) {
     return alpha;
 }
 
+
+SearchThreadPool pool(std::thread::hardware_concurrency());
+
 // Alpha-beta search
 template<Color Us>
-int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
+int parralel_alphabeta_pvs(Position &p, int depth, int alpha, int beta, bool shouldParallelize) {
     // TT Lookup
     uint64_t key = p.get_hash();
     TTEntry* entry = TT.probe(key);
@@ -98,12 +103,13 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
     }
 
     // Null move pruning
+
     if (depth >= 3 && !p.in_check<Us>()) {
         Position copy = p;
         copy.side_to_play = ~copy.side_to_play;
         copy.hash ^= zobrist::side_key;
 
-        int score = -alphabeta_pvs<~Us>(copy, depth - 3, -beta, -beta + 1);
+        int score = -parralel_alphabeta_pvs<~Us>(copy, depth - 3, -beta, -beta + 1, shouldParallelize);
         if (score >= beta) return beta;
     }
 
@@ -118,38 +124,56 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
     int score;
     Move bestMove;
     int origAlpha = alpha;
-    bool firstMove = true;
     int moveCount = 0;
+    std::vector<future<SearchResult>> futures;
+    bool pvDone = false;
     for (auto &m : moveVec) {
         moveCount++;
 
         // Futility Pruning
         if (depth == 1 && !p.in_check<Us>() && !m.is_capture()) {
             int stand = evaluate<Us>(p);
-            if (stand + 200 <= alpha) continue;
+            if (stand + 300 <= alpha) continue;
         }
 
         // Late Move Pruning
-        if (depth <= 3 && moveCount > 8 && !p.in_check<Us>() && !m.is_capture()) {
+        if (depth <= 3 && moveCount > 10 && !p.in_check<Us>() && !m.is_capture()) {
             continue;
         }
 
-        if (firstMove) { // pv
+        if (!pvDone) { // pv
             p.play<Us>(m);
-            int bestScore = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
+            int bestScore = -parralel_alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha, false);
             p.undo<Us>(m);
             if( bestScore > alpha ) {
                 if( bestScore >= beta )
                     return bestScore;
                 alpha = bestScore;
             }
-            firstMove = false;
+            pvDone = true;
+        } else if (shouldParallelize) {
+            //cout << "Spawning parallel task for move " << m << " at depth " << depth << "\n";
+            std::promise<SearchResult> prom;
+            futures.push_back(prom.get_future());
+
+            pool.enqueue(packaged_task<void()>([p, depth, alpha, beta, m, prom = std::move(prom)]() mutable {
+                Position child = p;
+                child.play<Us>(m);
+                int score = -parralel_alphabeta_pvs<~Us>(p, depth - 1, -alpha-1, -alpha, false);
+                if( score > alpha && score < beta ) {
+                    // research with window [alfa;beta]
+                    score = -parralel_alphabeta_pvs<~Us>(p, depth-1, -beta, -alpha, false);
+                    if(score > alpha)
+                        alpha = score;
+                }
+                prom.set_value(SearchResult{score, m});
+            }));
         } else {
             p.play<Us>(m);
-            score = -alphabeta_pvs<~Us>(p, depth - 1, -alpha-1, -alpha);
+            score = -parralel_alphabeta_pvs<~Us>(p, depth - 1, -alpha-1, -alpha, false);
             if( score > alpha && score < beta ) {
                 // research with window [alfa;beta]
-                score = -alphabeta_pvs<~Us>(p, depth-1, -beta, -alpha);
+                score = -parralel_alphabeta_pvs<~Us>(p, depth-1, -beta, -alpha, false);
                 if(score > alpha)
                     alpha = score;
             }
@@ -159,6 +183,19 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
                 bestMove = m;
             }
             if (bestScore > alpha) alpha = bestScore;
+            if (alpha >= beta) break;
+        }
+    }
+
+    if (shouldParallelize) {
+        for (auto &fut : futures) {
+            auto res = fut.get();
+            int score = res.score;
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = res.move;
+            }
+            if (score > alpha) alpha = score;
             if (alpha >= beta) break;
         }
     }
@@ -241,7 +278,8 @@ Move find_best_move(Position &p, int maxDepth, int timeLimitMs) {
                 }
 
                 p.play<Us>(m);
-                Score score = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
+                bool tryParallel = depth > 5;
+                Score score = -parralel_alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha, tryParallel);
                 p.undo<Us>(m);
                 if (score > currentBestScore) {
                     currentBestScore = score;
@@ -293,7 +331,7 @@ TIMEOUT:
 
 template int quiescence<WHITE>(Position&, int, int);
 template int quiescence<BLACK>(Position&, int, int);
-template int alphabeta_pvs<WHITE>(Position&, int, int, int);
-template int alphabeta_pvs<BLACK>(Position&, int, int, int);
+template int parralel_alphabeta_pvs<WHITE>(Position&, int, int, int, bool);
+template int parralel_alphabeta_pvs<BLACK>(Position&, int, int, int, bool);
 template Move find_best_move<WHITE>(Position&, int, int);
 template Move find_best_move<BLACK>(Position&, int, int);

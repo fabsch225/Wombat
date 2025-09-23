@@ -33,7 +33,7 @@ int main() {
     cout << "Starting FEN: " << p.fen() << "\n";
 
     int max_depth = 12; // AI search depth
-    int time_limit_ms = 6000;
+    int time_limit_ms = 7000;
 
     while (true) {
         cout << p << "\n";

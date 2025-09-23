@@ -22,6 +22,8 @@ add_executable(Chess main.cpp
         lib/surge/src/tables.h
         lib/surge/src/types.cpp
         lib/surge/src/types.h
+        src/SearchThreadpool.cpp
+        src/SearchThreadpool.h
 )
 
 add_library(fathom SHARED
