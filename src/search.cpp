@@ -70,7 +70,7 @@ int quiescence(Position &p, int alpha, int beta) {
 
 // Alpha-beta search
 template<Color Us>
-int alphabeta(Position &p, int depth, int alpha, int beta) {
+int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
     // TT Lookup
     uint64_t key = p.get_hash();
     TTEntry* entry = TT.probe(key);
@@ -99,19 +99,38 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
         return va > vb;
     });
     int bestScore = -1000000;
+    int score;
     Move bestMove;
     int origAlpha = alpha;
-
+    bool firstMove = true;
     for (auto &m : moveVec) {
-        p.play<Us>(m);
-        int score = -alphabeta<~Us>(p, depth - 1, -beta, -alpha);
-        p.undo<Us>(m);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove = m;
+        if (firstMove) { // pv
+            p.play<Us>(m);
+            int bestScore = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
+            p.undo<Us>(m);
+            if( bestScore > alpha ) {
+                if( bestScore >= beta )
+                    return bestScore;
+                alpha = bestScore;
+            }
+            firstMove = false;
+        } else {
+            p.play<Us>(m);
+            score = -alphabeta_pvs<~Us>(p, depth - 1, -alpha-1, -alpha);
+            if( score > alpha && score < beta ) {
+                // research with window [alfa;beta]
+                score = -alphabeta_pvs<~Us>(p, depth-1, -beta, -alpha);
+                if(score > alpha)
+                    alpha = score;
+            }
+            p.undo<Us>(m);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = m;
+            }
+            if (bestScore > alpha) alpha = bestScore;
+            if (alpha >= beta) break;
         }
-        if (bestScore > alpha) alpha = bestScore;
-        if (alpha >= beta) break;
     }
 
     NodeType type;
@@ -126,7 +145,7 @@ int alphabeta(Position &p, int depth, int alpha, int beta) {
 
 template<Color Us>
 Move find_best_move(Position &p, int maxDepth) {
-    TT.clear();
+    //TT.clear();
 
     // Opening book query
     std::string book_uci;
@@ -176,7 +195,7 @@ Move find_best_move(Position &p, int maxDepth) {
             // Root search loop
             for (auto &m : moveVec) {
                 p.play<Us>(m);
-                Score score = -alphabeta<~Us>(p, depth - 1, -beta, -alpha);
+                Score score = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
                 p.undo<Us>(m);
                 if (score > currentBestScore) {
                     currentBestScore = score;
@@ -228,7 +247,7 @@ Move find_best_move(Position &p, int maxDepth) {
 
 template int quiescence<WHITE>(Position&, int, int);
 template int quiescence<BLACK>(Position&, int, int);
-template int alphabeta<WHITE>(Position&, int, int, int);
-template int alphabeta<BLACK>(Position&, int, int, int);
+template int alphabeta_pvs<WHITE>(Position&, int, int, int);
+template int alphabeta_pvs<BLACK>(Position&, int, int, int);
 template Move find_best_move<WHITE>(Position&, int);
 template Move find_best_move<BLACK>(Position&, int);

@@ -14,7 +14,7 @@ template<Color Us>
 int quiescence(Position &p, int alpha, int beta);
 
 template<Color Us>
-int alphabeta(Position &p, int depth, int alpha, int beta);
+int alphabeta_pvs(Position &p, int depth, int alpha, int beta);
 
 template<Color Us>
 Move find_best_move(Position &p, int depth);
