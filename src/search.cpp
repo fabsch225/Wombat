@@ -96,6 +96,17 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
         if (p.in_check<Us>()) return -MATE_SCORE + (10 - depth);
         return 0; // stalemate
     }
+
+    // Null move pruning
+    if (depth >= 3 && !p.in_check<Us>()) {
+        Position copy = p;
+        copy.side_to_play = ~copy.side_to_play;
+        copy.hash ^= zobrist::side_key;
+
+        int score = -alphabeta_pvs<~Us>(copy, depth - 3, -beta, -beta + 1);
+        if (score >= beta) return beta;
+    }
+
     // move ordering: simple: captures first
     vector<Move> moveVec(moves.begin(), moves.end());
     sort(moveVec.begin(), moveVec.end(), [&](const Move &a, const Move &b) {
@@ -108,7 +119,21 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
     Move bestMove;
     int origAlpha = alpha;
     bool firstMove = true;
+    int moveCount = 0;
     for (auto &m : moveVec) {
+        moveCount++;
+
+        // Futility Pruning
+        if (depth == 1 && !p.in_check<Us>() && !m.is_capture()) {
+            int stand = evaluate<Us>(p);
+            if (stand + 200 <= alpha) continue;
+        }
+
+        // Late Move Pruning
+        if (depth <= 3 && moveCount > 8 && !p.in_check<Us>() && !m.is_capture()) {
+            continue;
+        }
+
         if (firstMove) { // pv
             p.play<Us>(m);
             int bestScore = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
@@ -149,20 +174,22 @@ int alphabeta_pvs(Position &p, int depth, int alpha, int beta) {
 }
 
 template<Color Us>
-Move find_best_move(Position &p, int maxDepth) {
+Move find_best_move(Position &p, int maxDepth, int timeLimitMs) {
     //TT.clear();
+
+    auto start = chrono::steady_clock::now();
 
     // Opening book query
     Move book_move;
     MoveList<Us> rootMoves(p);
-    if (maxDepth >= 3 && opening_db.probe(p, book_move)) {
+    /*if (maxDepth >= 3 && opening_db.probe(p, book_move)) {
         for (auto &m : rootMoves) {
             if (m.to() == book_move.to() && m.from() == book_move.from()) {
                 cout << "Opening Book move found: " << book_move << "\n";
                 return m;
             }
         }
-    }
+    }*/
 
     // Endgame tablebase probe
     int dtz;
@@ -178,6 +205,13 @@ Move find_best_move(Position &p, int maxDepth) {
 
     // Iterative deepening loop
     for (int depth = 1; depth <= maxDepth; ++depth) {
+        auto now = chrono::steady_clock::now();
+        if (chrono::duration_cast<chrono::milliseconds>(now - start).count() >= timeLimitMs) {
+            break; // stop deepening
+        }
+
+        cout << "Searching at depth " << depth << "..." << endl;
+
         Score window = 500; // aspiration window
         Score alpha = haveScore ? prevScore - window : -INF;
         Score beta  = haveScore ? prevScore + window :  INF;
@@ -201,6 +235,11 @@ Move find_best_move(Position &p, int maxDepth) {
 
             // Root search loop
             for (auto &m : moveVec) {
+                now = chrono::steady_clock::now();
+                if (duration_cast<chrono::milliseconds>(now - start).count() >= timeLimitMs) {
+                    goto TIMEOUT;
+                }
+
                 p.play<Us>(m);
                 Score score = -alphabeta_pvs<~Us>(p, depth - 1, -beta, -alpha);
                 p.undo<Us>(m);
@@ -248,7 +287,7 @@ Move find_best_move(Position &p, int maxDepth) {
             }
         }
     }
-
+TIMEOUT:
     return bestMove;
 }
 
@@ -256,5 +295,5 @@ template int quiescence<WHITE>(Position&, int, int);
 template int quiescence<BLACK>(Position&, int, int);
 template int alphabeta_pvs<WHITE>(Position&, int, int, int);
 template int alphabeta_pvs<BLACK>(Position&, int, int, int);
-template Move find_best_move<WHITE>(Position&, int);
-template Move find_best_move<BLACK>(Position&, int);
+template Move find_best_move<WHITE>(Position&, int, int);
+template Move find_best_move<BLACK>(Position&, int, int);

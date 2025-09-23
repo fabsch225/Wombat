@@ -25,14 +25,15 @@ int main() {
     initialise_all_databases();
     zobrist::initialise_zobrist_keys();
 
-    opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
+    //opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
 
     Position p;
     Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
     //Position::set("1rk5/8/8/8/8/8/2K5/8 b - - 0 1", p);
     cout << "Starting FEN: " << p.fen() << "\n";
 
-    int depth = 5; // AI search depth
+    int max_depth = 12; // AI search depth
+    int time_limit_ms = 6000;
 
     while (true) {
         cout << p << "\n";
@@ -78,7 +79,7 @@ int main() {
 
             // AI move
             cout << "AI thinking...\n";
-            Move best = find_best_move<BLACK>(p, depth);
+            Move best = find_best_move<BLACK>(p, max_depth, time_limit_ms);
             cout << "AI plays: " << best << "\n";
             p.play<BLACK>(best);
         }

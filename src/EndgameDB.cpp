@@ -239,7 +239,7 @@ bool EndgameDB::probe_next_move(const Position &p, Move &move_out, int &dtz_out)
 }
 
 bool EndgameDB::probe_wdl(const Position &pos, int &result) {
-
+    return false;
 }
 
 
