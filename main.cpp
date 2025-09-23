@@ -25,7 +25,7 @@ int main() {
     initialise_all_databases();
     zobrist::initialise_zobrist_keys();
 
-    //opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
+    opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
 
     Position p;
     Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);

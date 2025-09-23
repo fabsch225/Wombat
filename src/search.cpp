@@ -159,10 +159,10 @@ int parralel_alphabeta_pvs(Position &p, int depth, int alpha, int beta, bool sho
             pool.enqueue(packaged_task<void()>([p, depth, alpha, beta, m, prom = std::move(prom)]() mutable {
                 Position child = p;
                 child.play<Us>(m);
-                int score = -parralel_alphabeta_pvs<~Us>(p, depth - 1, -alpha-1, -alpha, false);
+                int score = -parralel_alphabeta_pvs<~Us>(child, depth - 1, -alpha-1, -alpha, false);
                 if( score > alpha && score < beta ) {
                     // research with window [alfa;beta]
-                    score = -parralel_alphabeta_pvs<~Us>(p, depth-1, -beta, -alpha, false);
+                    score = -parralel_alphabeta_pvs<~Us>(child, depth-1, -beta, -alpha, false);
                     if(score > alpha)
                         alpha = score;
                 }
@@ -219,14 +219,14 @@ Move find_best_move(Position &p, int maxDepth, int timeLimitMs) {
     // Opening book query
     Move book_move;
     MoveList<Us> rootMoves(p);
-    /*if (maxDepth >= 3 && opening_db.probe(p, book_move)) {
+    if (maxDepth >= 3 && opening_db.probe(p, book_move)) {
         for (auto &m : rootMoves) {
             if (m.to() == book_move.to() && m.from() == book_move.from()) {
                 cout << "Opening Book move found: " << book_move << "\n";
                 return m;
             }
         }
-    }*/
+    }
 
     // Endgame tablebase probe
     int dtz;
