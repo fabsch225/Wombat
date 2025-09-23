@@ -133,11 +133,11 @@ int parralel_alphabeta_pvs(Position &p, int depth, int alpha, int beta, bool sho
         // Futility Pruning
         if (depth == 1 && !p.in_check<Us>() && !m.is_capture()) {
             int stand = evaluate<Us>(p);
-            if (stand + 300 <= alpha) continue;
+            if (stand + 800 <= alpha) continue;
         }
 
         // Late Move Pruning
-        if (depth <= 3 && moveCount > 10 && !p.in_check<Us>() && !m.is_capture()) {
+        if (depth <= 3 && moveCount > 12 && !p.in_check<Us>() && !m.is_capture()) {
             continue;
         }
 
