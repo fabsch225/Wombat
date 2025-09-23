@@ -116,6 +116,18 @@ int evaluate(Position &p) {
             default: break;
         }
 
+        if (color_of(pc) == Us) score += piece_score;
+        else score -= piece_score;
+    }
+
+    // If we're up a rook, soft strategic bonuses hardly matter
+    if (score > 5000) {
+        return score;
+    }
+
+    for (int sq = 0; sq < 64; ++sq) {
+        auto pc = p.at(Square(sq));
+        int piece_score = 0;
         // Collect pawn info for structure bonuses
         if (type_of(pc) == PAWN) {
             int file = sq % 8;
