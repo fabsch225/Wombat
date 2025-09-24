@@ -16,7 +16,7 @@ OpeningDB opening_db;
 
 int main() {
     // Initialze Syzygy
-    if (!tb_init("/home/fabian/misc/Chess/data/syzygy")) {
+    if (!tb_init("/home/fabian/CLionProjects/Chess/data/syzygy")) {
         cerr << "Failed to initialize Syzygy tablebases.\n";
         return 1;
     }
@@ -25,11 +25,11 @@ int main() {
     initialise_all_databases();
     zobrist::initialise_zobrist_keys();
 
-    opening_db.load_from_csv("/home/fabian/misc/Chess/data/my_openings_l.csv");
+    opening_db.load_from_csv("/home/fabian/CLionProjects/Chess/data/my_openings_l.csv");
 
     Position p;
-    Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
-    //Position::set("1rk5/8/8/8/8/8/2K5/8 b - - 0 1", p);
+    //Position::set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", p);
+    Position::set("1rq2rk1/pb1nbp1p/2p1p1p1/3nP3/Np1PQ3/1P1B1NP1/P1R2P1P/2BR2K1 b -  -", p);
     cout << "Starting FEN: " << p.fen() << "\n";
 
     int max_depth = 12; // AI search depth

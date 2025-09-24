@@ -14,7 +14,7 @@ template<Color Us>
 int quiescence(Position &p, int alpha, int beta);
 
 template<Color Us>
-int parralel_alphabeta_pvs(Position &p, int depth, int alpha, int beta, bool shouldParallelize);
+int parallel_alphabeta_pvs(Position &p, int depth, int alpha, int beta, bool tryParallel, bool tryCache);
 
 template<Color Us>
 Move find_best_move(Position &p, int depth, int timeLimitMs = 1000);
