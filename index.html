@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#000000">
     <title>Wombat Chess</title>
     <meta name="description" content="Play against Wombat, a UCI chess engine in C++ compiled to multithreaded WebAssembly.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
@@ -10,13 +11,12 @@
          GitHub Pages can't send the COOP/COEP headers, so a service worker adds them. -->
     <script src="coi-serviceworker.min.js"></script>
     <link rel="stylesheet" href="vendor/chessground.base.css">
-    <link rel="stylesheet" href="vendor/chessground.brown.css">
     <link rel="stylesheet" href="vendor/chessground.cburnett.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-    <h1>Wombat</h1>
+    <h1>wombat<span class="cursor">_</span></h1>
     <p>A C++ chess engine running in your browser as multithreaded WebAssembly.
         <a href="https://github.com/fabsch225/Wombat">Source</a></p>
 </header>
