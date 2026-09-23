@@ -2,6 +2,8 @@ import { Chessground } from './vendor/chessground.js';
 import { Chess } from './vendor/chess.js';
 
 const $ = id => document.getElementById(id);
+// For optional elements (the engine statistics panel is currently disabled in index.html)
+const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const MAX_THREADS = Math.min(navigator.hardwareConcurrency || 4, 32); // matches PTHREAD_POOL_SIZE
 
@@ -35,7 +37,7 @@ function applyOptions() {
     uci('setoption name Threads value ' + $('threads').value);
     uci('setoption name Hash value ' + $('hash').value);
     uci('setoption name UseNNUE value ' + $('nnue').value);
-    $('threads-info').textContent = `${evalName()}, ${$('threads').value} thread${$('threads').value === '1' ? '' : 's'}, ${$('hash').value} MB`;
+    setText('threads-info', `${evalName()}, ${$('threads').value} thread${$('threads').value === '1' ? '' : 's'}, ${$('hash').value} MB`);
 }
 
 function evalName() {
@@ -83,8 +85,8 @@ function stopSearch() {
 let thinkingFen = null;
 
 function clearInfo() {
-    for (const id of ['st-depth', 'st-score', 'st-nps', 'st-nodes']) $(id).textContent = '–';
-    $('pv').textContent = '';
+    for (const id of ['st-depth', 'st-score', 'st-nps', 'st-nodes']) setText(id, '–');
+    setText('pv', '');
 }
 
 function showInfo(line) {
@@ -106,11 +108,11 @@ function showInfo(line) {
         scoreText = (whiteCp > 0 ? '+' : '') + (whiteCp / 100).toFixed(2);
     }
 
-    $('st-depth').textContent = get('depth') + '/' + get('seldepth');
-    $('st-score').textContent = scoreText;
-    $('st-nps').textContent = formatCount(+get('nps')) + 'n/s';
-    $('st-nodes').textContent = formatCount(+get('nodes'));
-    $('pv').textContent = pvToSan(tok.slice(tok.indexOf('pv') + 1));
+    setText('st-depth', get('depth') + '/' + get('seldepth'));
+    setText('st-score', scoreText);
+    setText('st-nps', formatCount(+get('nps')) + 'n/s');
+    setText('st-nodes', formatCount(+get('nodes')));
+    if ($('pv')) setText('pv', pvToSan(tok.slice(tok.indexOf('pv') + 1)));
     setEvalBar(whiteCp, scoreText);
 }
 
@@ -276,9 +278,9 @@ function renderPlayers() {
     $('player-bottom').textContent = names[orientation];
 }
 
+// The status line was removed from the page; messages only go to the console.
 function setStatus(text, error = false) {
-    $('status').textContent = text;
-    $('status').classList.toggle('error', error);
+    (error ? console.error : console.log)('[wombat] ' + text);
 }
 
 function newGame(color, fen = START_FEN) {
