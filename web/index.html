@@ -16,7 +16,7 @@
 </head>
 <body>
 <header>
-    <h1>wombat<span class="cursor">_</span></h1>
+    <h1>Wombat</h1>
     <p>A C++ chess engine running in your browser as multithreaded WebAssembly.
         <a href="https://github.com/fabsch225/Wombat">Source</a></p>
 </header>
@@ -35,7 +35,6 @@
             </div>
         </div>
         <div class="player bottom" id="player-bottom"></div>
-        <div class="status" id="status">Loading engine…</div>
     </section>
 
     <aside class="panel">
@@ -80,6 +79,8 @@
             </label>
         </div>
 
+        <!-- Engine statistics (depth, score, speed, nodes, principal variation), parsed from the
+             engine's UCI "info" output. Disabled for now; app.js skips the elements while they are absent.
         <div class="engine">
             <div class="engine-head">
                 <span>Engine</span>
@@ -93,6 +94,7 @@
             </dl>
             <div class="pv" id="pv"></div>
         </div>
+        -->
 
         <div class="moves-box">
             <div class="engine-head"><span>Moves</span>
