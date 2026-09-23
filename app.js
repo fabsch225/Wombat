@@ -34,7 +34,12 @@ function startEngine() {
 function applyOptions() {
     uci('setoption name Threads value ' + $('threads').value);
     uci('setoption name Hash value ' + $('hash').value);
-    $('threads-info').textContent = `${$('threads').value} thread${$('threads').value === '1' ? '' : 's'}, ${$('hash').value} MB`;
+    uci('setoption name UseNNUE value ' + $('nnue').value);
+    $('threads-info').textContent = `${evalName()}, ${$('threads').value} thread${$('threads').value === '1' ? '' : 's'}, ${$('hash').value} MB`;
+}
+
+function evalName() {
+    return $('nnue').value === 'true' ? 'NNUE' : 'Classical';
 }
 
 function handleLine(line) {
@@ -262,7 +267,7 @@ function renderMoves() {
 }
 
 function renderPlayers() {
-    const engineName = `Wombat (${$('threads').value}T, ${(+$('movetime').value / 1000)} s/move)`;
+    const engineName = `Wombat (${evalName()}, ${$('threads').value}T, ${(+$('movetime').value / 1000)} s/move)`;
     const names = mode() === 'analyze'
         ? { white: 'White', black: 'Black' }
         : { [humanColor]: 'You', [humanColor === 'white' ? 'black' : 'white']: engineName };
@@ -318,9 +323,10 @@ $('flip').onclick = () => {
 };
 $('mode').onchange = () => { stopSearch(); update(); };
 $('movetime').onchange = renderPlayers;
-for (const id of ['threads', 'hash']) $(id).onchange = () => {
+for (const id of ['threads', 'hash', 'nnue']) $(id).onchange = () => {
     stopSearch();
     applyOptions();
+    if (id === 'nnue') uci('ucinewgame'); // don't reuse TT scores from the other evaluation
     renderPlayers();
     update();
 };
