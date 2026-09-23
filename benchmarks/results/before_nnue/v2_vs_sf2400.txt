@@ -1,0 +1,11 @@
+Results of Wombat vs SF2400 (10+0.1, 1t, 32MB, book.epd):
+Elo: 447.14 +/- 138.18, nElo: 594.62 +/- 62.16
+LOS: 100.00 %, DrawRatio: 10.00 %, PairsRatio: 53.00
+Games: 120, Wins: 110, Losses: 7, Draws: 3, Points: 111.5 (92.92 %)
+Ptnml(0-2): [0, 1, 6, 2, 51], WL/DD Ratio: inf
+
+Termination reasons:
+  63 White mates
+  54 Black mates
+   2 Draw by fifty moves rule
+   1 Draw by insufficient mating material

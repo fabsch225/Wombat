@@ -1,0 +1,10 @@
+Results of Wombat vs SF1800 (10+0.1, 1t, 32MB, book.epd):
+Elo: inf +/- nan, nElo: inf +/- nan
+LOS: 100.00 %, DrawRatio: 0.00 %, PairsRatio: inf
+Games: 200, Wins: 200, Losses: 0, Draws: 0, Points: 200.0 (100.00 %)
+Ptnml(0-2): [0, 0, 0, 0, 100], WL/DD Ratio: nan
+
+Termination reasons:
+ 100 Black mates
+  99 White mates
+   1 Black loses on time (14ms overrun)

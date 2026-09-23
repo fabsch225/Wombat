@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include "surge_attacks.h"
 #include "../lib/surge/src/position.h"
-#include "../lib/surge/src/types.h"
 
-int piece_value(int piece);
+// Midgame piece values, used for move ordering, SEE and pruning margins
+constexpr int PIECE_VALUE[6] = {100, 320, 330, 500, 950, 0};
 
-template<Color Us>
-int evaluate(Position &p);
+// Static evaluation in centipawns from the side to move's point of view.
+int evaluate(const Position &p);
 
 #endif //CHESS_EVAL_H

@@ -5,7 +5,13 @@
 // build_opening_db.cpp
 // Compile and link with your engine code that defines Position, Move, types.h, tables.h, etc.
 
-#include <bits/stdc++.h>
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <filesystem>
 #include <regex>
 #include "../lib/surge/src/position.h"

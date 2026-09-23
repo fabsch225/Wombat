@@ -1,0 +1,13 @@
+Results of Wombat vs SF3000 (10+0.1, 1t, 32MB, book.epd):
+Elo: -147.19 +/- 68.58, nElo: -216.16 +/- 87.91
+LOS: 0.00 %, DrawRatio: 33.33 %, PairsRatio: 0.05
+Games: 60, Wins: 9, Losses: 33, Draws: 18, Points: 18.0 (30.00 %)
+Ptnml(0-2): [7, 12, 10, 0, 1], WL/DD Ratio: 2.33
+
+Termination reasons:
+  24 White mates
+  18 Black mates
+   7 Draw by 3-fold repetition
+   5 Draw by fifty moves rule
+   4 Draw by insufficient mating material
+   2 Draw by stalemate
